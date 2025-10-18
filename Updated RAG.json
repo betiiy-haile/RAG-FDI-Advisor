@@ -1,0 +1,291 @@
+{
+  "name": "Updated RAG",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        464,
+        -16
+      ],
+      "id": "33410dfd-e949-4cfe-ae06-6fc1c27e1844",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1r4H2qeeI_a5A9hWJH4uYmw2H-95rm5IU",
+            "mode": "list",
+            "cachedResultName": "Investment Documents",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/1r4H2qeeI_a5A9hWJH4uYmw2H-95rm5IU"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        672,
+        -16
+      ],
+      "id": "dd47d962-e1d4-46be-ad9b-e2b40964ca18",
+      "name": "Search files and folders",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "1bSWV8uuWGCQk01U",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        880,
+        -16
+      ],
+      "id": "517080d2-8df2-4191-ab86-c4d8f291cd4f",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "1bSWV8uuWGCQk01U",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        1056,
+        -16
+      ],
+      "id": "0a424ac7-f142-4c0c-8822-c5df16393da3",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.pdf.co/v1/file/upload",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "betelhem.haile@a2sv.org_5mS0NdPFPsJzEFLzAN1wfVIQETRGxH8RNAhbiL8NCrYK7xC5xC83LNsQsugWEu6y"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "name",
+              "value": "=={{$json.name}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        224
+      ],
+      "id": "a3c061d1-2052-469a-b4a5-5ab8ddbbf5cd",
+      "name": "Upload to PDF.co"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.pdf.co/v1/pdf/convert/to/text",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "betelhem.haile@a2sv.org_5mS0NdPFPsJzEFLzAN1wfVIQETRGxH8RNAhbiL8NCrYK7xC5xC83LNsQsugWEu6y"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"url\": \"{{ $json.url }}\",\n  \"ocr\": true,\n  \"pages\": \"1-\",          \n  \"async\": true,\n  \"inline\": true\n}\n",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        640,
+        224
+      ],
+      "id": "6f80594b-c375-41be-b7f6-60490a1a64d5",
+      "name": "Convert PDF to Text (OCR)"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        848,
+        224
+      ],
+      "id": "fa4ba7c1-03f2-40a5-90bc-14fc012644c8",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "// This runs once and processes all documents (from \"Extract from File\")\nconst results = [];\n\nfor (const item of items) {\n  const text = item.json.text;\n  const numPages = item.json.numpages || 1;\n  const fileName = item.json.info.Title || item.json.info.Creator || \"unknown.pdf\";\n\n  if (!text) continue;\n\n  // Split text evenly per page\n  const chunkLength = Math.ceil(text.length / numPages);\n\n  for (let i = 0; i < numPages; i++) {\n    const pageText = text.slice(i * chunkLength, (i + 1) * chunkLength).trim();\n    if (pageText.length > 0) {\n      results.push({\n        json: {\n          document_name: fileName,\n          page_number: i + 1,\n          text: pageText,\n        },\n      });\n    }\n  }\n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        -16
+      ],
+      "id": "8d692552-2cfd-4f0f-be51-69e2043c059f",
+      "name": "Split per Page"
+    },
+    {
+      "parameters": {
+        "jsCode": "// === CONFIG ===\nconst chunkSize = 2000;\nconst overlap = 400;\n\n// Get all input items\nconst allItems = $input.all();\n\n// Array to collect all chunks from all pages\nconst allChunks = [];\n\n// Process each item\nfor (const item of allItems) {\n  const inputJson = item.json;\n\n  // Ensure text is a valid string\n  let text = inputJson.text;\n  if (text == null || typeof text !== 'string') {\n    text = String(text || '');\n  }\n\n  const docName = String(inputJson.document_name || 'Unknown Document');\n  const page = Number.isInteger(inputJson.page_number) \n    ? inputJson.page_number \n    : (typeof inputJson.page_number === 'number' ? Math.floor(inputJson.page_number) : 1);\n\n  // Chunk this page's text\n  const pageChunks = [];\n\n  if (typeof text === 'string' && text.trim().length > 0) {\n    for (let i = 0; i < text.length; i += (chunkSize - overlap)) {\n      const rawChunk = text.slice(i, i + chunkSize);\n      const trimmedChunk = rawChunk.trim();\n      \n      if (trimmedChunk.length > 0) {\n        pageChunks.push({\n          json: {\n            id: `${docName}_page${page}_chunk${i}`,\n            document_name: docName,\n            page_number: page,\n            text: trimmedChunk\n          }\n        });\n      }\n    }\n  }\n\n  // If no chunks, add empty one\n  if (pageChunks.length === 0) {\n    pageChunks.push({\n      json: {\n        id: `${docName}_page${page}_empty`,\n        document_name: docName,\n        page_number: page,\n        text: ''\n      }\n    });\n  }\n\n  // Add all chunks from this page to global list\n  allChunks.push(...pageChunks);\n}\n\nreturn allChunks;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1472,
+        -16
+      ],
+      "id": "3b1c6e27-2c8a-4d8e-9879-a4bf77bf6eed",
+      "name": "Code – Chunk Text"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Search files and folders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search files and folders": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Split per Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to PDF.co": {
+      "main": [
+        [
+          {
+            "node": "Convert PDF to Text (OCR)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert PDF to Text (OCR)": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        []
+      ]
+    },
+    "Split per Page": {
+      "main": [
+        [
+          {
+            "node": "Code – Chunk Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "702f80db-75b3-4c31-a3f2-67f94c0a4447",
+  "meta": {
+    "instanceId": "547ad42b34db1af90e7543e4f59d130463531e42dd59861afc3b84d79c5892bd"
+  },
+  "id": "ksxNV1EGaffPoJlJ",
+  "tags": []
+}
