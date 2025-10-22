@@ -6,7 +6,7 @@
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        464,
+        64,
         -16
       ],
       "id": "33410dfd-e949-4cfe-ae06-6fc1c27e1844",
@@ -29,7 +29,7 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        672,
+        240,
         -16
       ],
       "id": "dd47d962-e1d4-46be-ad9b-e2b40964ca18",
@@ -54,7 +54,7 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        880,
+        416,
         -16
       ],
       "id": "517080d2-8df2-4191-ab86-c4d8f291cd4f",
@@ -74,8 +74,8 @@
       "type": "n8n-nodes-base.extractFromFile",
       "typeVersion": 1,
       "position": [
-        1056,
-        -16
+        320,
+        224
       ],
       "id": "0a424ac7-f142-4c0c-8822-c5df16393da3",
       "name": "Extract from File"
@@ -113,8 +113,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        480,
-        224
+        592,
+        -16
       ],
       "id": "a3c061d1-2052-469a-b4a5-5ab8ddbbf5cd",
       "name": "Upload to PDF.co"
@@ -146,8 +146,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        640,
-        224
+        800,
+        -16
       ],
       "id": "6f80594b-c375-41be-b7f6-60490a1a64d5",
       "name": "Convert PDF to Text (OCR)"
@@ -160,7 +160,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        848,
+        176,
         224
       ],
       "id": "fa4ba7c1-03f2-40a5-90bc-14fc012644c8",
@@ -173,8 +173,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1264,
-        -16
+        480,
+        224
       ],
       "id": "8d692552-2cfd-4f0f-be51-69e2043c059f",
       "name": "Split per Page"
@@ -186,11 +186,67 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1472,
-        -16
+        656,
+        224
       ],
       "id": "3b1c6e27-2c8a-4d8e-9879-a4bf77bf6eed",
       "name": "Code – Chunk Text"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "1536-fdi-db",
+          "mode": "list",
+          "cachedResultName": "1536-fdi-db"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        864,
+        224
+      ],
+      "id": "38023e10-3f46-463c-801d-d47236b1b28a",
+      "name": "Pinecone Vector Store",
+      "credentials": {
+        "pineconeApi": {
+          "id": "L7m1FzG5VEhTqsvF",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        768,
+        416
+      ],
+      "id": "94e77265-0f70-4434-895b-34cba7215336",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "0bJp7zfTT2qbcl6q",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        944,
+        416
+      ],
+      "id": "8cabb3b0-50d9-4ac4-a977-5e6944dedd19",
+      "name": "Default Data Loader"
     }
   ],
   "pinData": {},
@@ -221,7 +277,7 @@
       "main": [
         [
           {
-            "node": "Extract from File",
+            "node": "Upload to PDF.co",
             "type": "main",
             "index": 0
           }
@@ -263,7 +319,13 @@
     },
     "HTTP Request": {
       "main": [
-        []
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Split per Page": {
@@ -276,14 +338,48 @@
           }
         ]
       ]
+    },
+    "Code – Chunk Text": {
+      "main": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "702f80db-75b3-4c31-a3f2-67f94c0a4447",
+  "versionId": "fafe5564-0e28-46cd-93fa-c083c4ba7200",
   "meta": {
+    "templateCredsSetupCompleted": true,
     "instanceId": "547ad42b34db1af90e7543e4f59d130463531e42dd59861afc3b84d79c5892bd"
   },
   "id": "ksxNV1EGaffPoJlJ",
