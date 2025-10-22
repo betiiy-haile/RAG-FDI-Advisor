@@ -29,7 +29,6 @@ The system processes the following Ethiopian investment documents:
 - **Ethiopia - Investment Proclamation No1180_2020 (English).pdf** - Official investment proclamation
 - **Ethiopia-Investment-Policies-and-Incentives-and-Opportunities.pdf** - Investment policies and incentives
 - **Ethiopian-Investment-Guide-2023.pdf** - Comprehensive investment guide
-- **investment-law-teaching-material.pdf** - Educational materials on investment law
 - **wb-UNCTAD-investment-reports.pdf** - World Bank and UNCTAD investment reports
 
 ## 🔧 Workflow Components
